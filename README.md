@@ -1,0 +1,2 @@
+# ScalaPractice
+Learning Scala
