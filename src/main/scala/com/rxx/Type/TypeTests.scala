@@ -37,7 +37,7 @@ object TypeTests {
     val p1 = new Tooo("eric")
     val d1 = new Dog("mame")
     val part = new Party2 (p1, d1)
-    part.play
+//    part.play   错误，不能call d1即Dog类的sayName方法
   }
 
   //泛型函数
