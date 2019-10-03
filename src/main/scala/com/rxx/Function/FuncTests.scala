@@ -1,3 +1,9 @@
+package com.rxx.Function
+
+/**
+ * Scala函数式编程
+ * Scala模式匹配
+ */
 object FuncTests {
   def main(args: Array[String]): Unit = {
     val a = Array(1,2,3,4)
