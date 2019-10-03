@@ -29,9 +29,15 @@ object TypeTests {
     //下边界Bounds测试
     val father = new Father("Jason")
     val child = new Child("Jack")
-    getId(father)
-    getId(child)
-    getId(jesy)
+//    getId(father)
+//    getId(child)
+//    getId(jesy)
+
+    //View Bounds测试
+    val p1 = new Tooo("eric")
+    val d1 = new Dog("mame")
+    val part = new Party2 (p1, d1)
+    part.play
   }
 
   //泛型函数
@@ -65,5 +71,22 @@ object TypeTests {
     else if (person.isInstanceOf[Father]) println("Sign here")
     else println("Not Allowed")
   }
+
+  //View Bounds
+  class Tooo (name: String) extends Person (name)
+  class Dog (val name: String) {
+    def sayName = println("wa,wa...")
+  }
+  //隐式转换，把不相干的Dog类转换为Person类
+  implicit def dog2Person (dog: Object): Person =
+    if (dog.isInstanceOf[Dog]) {
+      val _dog = dog.asInstanceOf[Dog]
+      new Person (_dog.name)
+    } else Nil
+  //[U <% Person]表示
+  class Party2 [U <% Person] (p1: U, p2: U) {
+    def play = p1.makeFriends(p2)
+  }
+
 
 }
