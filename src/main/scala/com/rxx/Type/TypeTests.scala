@@ -38,6 +38,11 @@ object TypeTests {
     val d1 = new Dog("mame")
     val part = new Party2 (p1, d1)
 //    part.play   错误，不能call d1即Dog类的sayName方法
+
+    //Context Bounds测试
+    val getMax = new Calculator(4.0,2.0)
+    println(getMax.max)
+
   }
 
   //泛型函数
@@ -86,6 +91,12 @@ object TypeTests {
   //[U <% Person]表示
   class Party2 [U <% Person] (p1: U, p2: U) {
     def play = p1.makeFriends(p2)
+  }
+
+  //Context Bounds
+  class Calculator [T: Ordering] (val n1: T, val n2: T) {
+    def max (implicit order: Ordering[T]) =
+      if (order.compare(n1,n2) > 0) n1 else n2
   }
 
 
