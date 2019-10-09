@@ -1,0 +1,6 @@
+class1,80
+class2,70
+class2,90
+class3,90
+class1,45
+class1,79
