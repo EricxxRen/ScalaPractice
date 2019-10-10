@@ -1,6 +1,5 @@
 package com.rxx.transformRDD
 
-import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
 object TransformationOPs {
@@ -10,7 +9,10 @@ object TransformationOPs {
 //    filterTest()
 //    flatMapTest()
 //    groupByKeyTest()
-    reduceByKeyTest()
+//    reduceByKeyTest()
+//    sortByKeyTest()
+//    joinTest()
+    cogroupTest()
   }
 
   /**
@@ -98,6 +100,95 @@ object TransformationOPs {
     }).reduceByKey(_ + _)
 
     result.foreach(pair => println(pair._1 + ": " + pair._2))
+
+  }
+
+  /**
+   * 分数排序 - sortByKey
+   */
+  def sortByKeyTest (): Unit = {
+    val conf = new SparkConf().setAppName("sortByKey").setMaster("local")
+    val sc = new SparkContext(conf)
+
+    val scores = Array(
+      Tuple2(45, "joe"),
+      Tuple2(23,"jason"),
+      Tuple2(67, "john"),
+      Tuple2(10, "Eric"),
+      Tuple2(98, "lily")
+    )
+
+    val scorePair = sc.parallelize(scores)
+
+    //升序
+    scorePair.sortByKey().foreach(pair => println(pair._1 + ": " + pair._2))
+    println("==================")
+    //降序
+    scorePair.sortByKey(false).foreach(pair => println(pair._1 + ": " + pair._2))
+  }
+
+  /**
+   * 打印分数 - join
+   */
+  def joinTest(): Unit = {
+    val conf = new SparkConf().setAppName("join").setMaster("local")
+    val sc = new SparkContext(conf)
+
+    val names = Array(
+      Tuple2(1, "joe"),
+      Tuple2(2,"jason"),
+      Tuple2(3, "john"),
+      Tuple2(4, "Eric"),
+      Tuple2(5, "lily")
+    )
+
+    val scores = Array(
+      Tuple2(1, 54),
+      Tuple2(2,789),
+      Tuple2(3, 35),
+      Tuple2(4, 235),
+      Tuple2(5, 456)
+    )
+
+    val nameRDD = sc.parallelize(names)
+    val scoreRDD = sc.parallelize(scores)
+
+    nameRDD.join(scoreRDD).foreach(pair => println(pair._1 + ": " + pair._2))
+
+  }
+
+  /**
+   * 打印分数 - cogroup
+   */
+  def cogroupTest(): Unit = {
+    val conf = new SparkConf().setAppName("cogroup").setMaster("local")
+    val sc = new SparkContext(conf)
+
+    val names = Array(
+      Tuple2(1, "joe"),
+      Tuple2(1, "jolly"),
+      Tuple2(2,"jason"),
+      Tuple2(3, "johnson"),
+      Tuple2(3, "john"),
+      Tuple2(4, "Eric"),
+      Tuple2(5, "lily")
+    )
+
+    val scores = Array(
+      Tuple2(1, 54),
+      Tuple2(1, 154),
+      Tuple2(2,789),
+      Tuple2(2,123),
+      Tuple2(3, 35),
+      Tuple2(4, 235),
+      Tuple2(4, 1234),
+      Tuple2(5, 456)
+    )
+
+    val nameRDD = sc.parallelize(names)
+    val scoreRDD = sc.parallelize(scores)
+
+    nameRDD.cogroup(scoreRDD).foreach(pair => println(pair._1 + ": " + pair._2._1 + "|" + pair._2._2))
 
   }
 

@@ -20,7 +20,10 @@ public class TransformationOp {
 //        filterPractise();
 //        flatMapPractise();
 //        groupByKeyPractise();
-        reduceByKeyPractise();
+//        reduceByKeyPractise();
+//        sortByKeyPractise();
+//        joinPractise();
+        cogroupPractise();
     }
 
     /**
@@ -180,7 +183,13 @@ public class TransformationOp {
             }
         });
 
+        //reduceByKey算子接收Function2对象，Function2对象有3个泛型参数
+        //第1，2个泛型参数代表原始rdd中参数的类型，也与call方法的参数类型相同，
+        //第3个泛型类型代表每次reduce操作返回值得类型
         JavaPairRDD<String, Integer> result = pairRDD.reduceByKey(new Function2<Integer, Integer, Integer>() {
+            //对每个key都会将其value传入call方法
+            //从而聚合出每个key对应的value
+            //然后将key和对应的value组合成为Tuple2，作为新RDD的元素
             public Integer call(Integer v1, Integer v2) throws Exception {
                 return v1 + v2;
             }
@@ -195,4 +204,130 @@ public class TransformationOp {
         sc.close();
 
     }
+
+    /**
+     * 分数排序 - sortByKey
+     */
+    private static void sortByKeyPractise () {
+        SparkConf conf = new SparkConf().setAppName("sortByKey").setMaster("local");
+        JavaSparkContext sc = new JavaSparkContext(conf);
+
+        List<Tuple2<Integer, String>> scores = Arrays.asList(
+                new Tuple2<Integer, String>(65, "jack"),
+                new Tuple2<Integer, String>(90, "Etic"),
+                new Tuple2<Integer, String>(23, "tom"),
+                new Tuple2<Integer, String>(79, "jason")
+        );
+
+        JavaPairRDD<Integer, String> pairRDD = sc.parallelizePairs(scores);
+
+        //sortByKey算子为根据key进行排序
+        //sortByKey()为升序，sortByKey(false)为降序
+        JavaPairRDD<Integer, String> soredRDD = pairRDD.sortByKey();
+        JavaPairRDD<Integer, String> soredRDD2 = pairRDD.sortByKey(false);
+
+        soredRDD.foreach(new VoidFunction<Tuple2<Integer, String>>() {
+            public void call(Tuple2<Integer, String> t1) throws Exception {
+                System.out.println(t1._1 + ": " + t1._2);
+            }
+        });
+
+        sc.close();
+
+    }
+
+    /**
+     * 打印分数 - join
+     */
+    private static void joinPractise () {
+        SparkConf conf = new SparkConf().setAppName("join").setMaster("local");
+        JavaSparkContext sc = new JavaSparkContext(conf);
+
+        List<Tuple2<Integer, String>> names = Arrays.asList(
+                new Tuple2<Integer, String>(1, "jack"),
+                new Tuple2<Integer, String>(2, "Etic"),
+                new Tuple2<Integer, String>(3, "tom"),
+                new Tuple2<Integer, String>(4, "jason"),
+                //在下面的scores中，没有key为5的tuple2，不会再join中显示
+                new Tuple2<Integer, String>(5, "john")
+        );
+
+        List<Tuple2<Integer, Integer>> scores = Arrays.asList(
+                new Tuple2<Integer, Integer>(1, 645),
+                new Tuple2<Integer, Integer>(2, 234),
+                new Tuple2<Integer, Integer>(3, 678),
+                new Tuple2<Integer, Integer>(4, 1213),
+                //在上面的names中，没有key为6的tuple2，不会再join中显示
+                new Tuple2<Integer, Integer>(6, 2341)
+        );
+
+        JavaPairRDD<Integer, String> nameRDD = sc.parallelizePairs(names);
+        JavaPairRDD<Integer, Integer> scoreRDD = sc.parallelizePairs(scores);
+
+        //使用join算子关联2个rdd
+        //会根据key进行join返回pairRDD
+        //JavaPairRDD的第一个泛型为之前2个JavaPairRDD的key的类型，是根据key进行的join
+        //第二个泛型为Tuple2<v1,v2>的类型，v1和v2分别为原始rdd的value的类型
+        //注意：只有在key匹配的情况下才会返回，names有而scores没有或names没有而scores有的不会返回
+            //如((1，2),(1，3),(1，4))和((1，5),(2，6),(2，7))进行join会得到：
+            //((1，(2,5)),(1，(3,5)),(1，(4,5)))
+        JavaPairRDD<Integer, Tuple2<String, Integer>> joinRDD = nameRDD.join(scoreRDD);
+
+        joinRDD.foreach(new VoidFunction<Tuple2<Integer, Tuple2<String, Integer>>>() {
+            public void call(Tuple2<Integer, Tuple2<String, Integer>> t1) throws Exception {
+                System.out.println(t1._1 + ") " + t1._2._1 + ": " + t1._2._2);
+            }
+        });
+
+        sc.close();
+    }
+
+    /**
+     * 打印分数 - cogroup
+     */
+    private static void cogroupPractise () {
+        SparkConf conf = new SparkConf().setAppName("cogroup").setMaster("local");
+        JavaSparkContext sc = new JavaSparkContext(conf);
+
+        //一个key下有多个value
+        List<Tuple2<Integer, String>> names = Arrays.asList(
+                new Tuple2<Integer, String>(1, "jack"),
+                new Tuple2<Integer, String>(1, "john"),
+                new Tuple2<Integer, String>(2, "Etic"),
+                new Tuple2<Integer, String>(3, "tom"),
+                new Tuple2<Integer, String>(3, "tomas"),
+                new Tuple2<Integer, String>(4, "jason")
+        );
+
+        //一个key下有多个value
+        List<Tuple2<Integer, Integer>> scores = Arrays.asList(
+                new Tuple2<Integer, Integer>(1, 645),
+                new Tuple2<Integer, Integer>(1, 5435),
+                new Tuple2<Integer, Integer>(2, 234),
+                new Tuple2<Integer, Integer>(3, 678),
+                new Tuple2<Integer, Integer>(3, 567),
+                new Tuple2<Integer, Integer>(3, 678),
+                new Tuple2<Integer, Integer>(4, 1213),
+                new Tuple2<Integer, Integer>(4, 761)
+
+        );
+
+        JavaPairRDD<Integer, String> nameRDD = sc.parallelizePairs(names);
+        JavaPairRDD<Integer, Integer> scoreRDD = sc.parallelizePairs(scores);
+
+        //使用cogroup算子关联2个rdd
+        //会根据key进行cogroup返回pairRDD
+        //JavaPairRDD的第一个泛型为之前2个JavaPairRDD的key的类型，是根据key进行的cogroup
+        //第二个泛型为Tuple2<v1,v2>的类型，v1和v2分别为原始rdd的value的类型的Iterable
+        JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<Integer>>> cogroup = nameRDD.cogroup(scoreRDD);
+
+        cogroup.foreach(new VoidFunction<Tuple2<Integer, Tuple2<Iterable<String>, Iterable<Integer>>>>() {
+            public void call(Tuple2<Integer, Tuple2<Iterable<String>, Iterable<Integer>>> t1) throws Exception {
+                System.out.println(t1._1 + ": " + t1._2._1 + "|" + t1._2._2);
+            }
+        });
+
+        sc.close();
+    }
+
 }
