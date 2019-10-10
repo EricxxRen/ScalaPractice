@@ -9,7 +9,8 @@ object TransformationOPs {
 //    mapTest()
 //    filterTest()
 //    flatMapTest()
-    groupByKeyTest()
+//    groupByKeyTest()
+    reduceByKeyTest()
   }
 
   /**
@@ -82,5 +83,23 @@ object TransformationOPs {
       println("---------------")
     })
   }
+
+  /**
+   * 班级总分 - reduceByKey
+   */
+  def reduceByKeyTest (): Unit = {
+    val conf = new SparkConf().setAppName("reduceByKey").setMaster("local")
+    val sc = new SparkContext(conf)
+
+    val lines = sc.textFile("/Users/renxiaoxing/Documents/gitRepo/ScalaPractice/Inputs/marks.txt")
+
+    val result = lines.map(line => {
+      (line.split(",")(0), Integer.valueOf(line.split(",")(1)))
+    }).reduceByKey(_ + _)
+
+    result.foreach(pair => println(pair._1 + ": " + pair._2))
+
+  }
+
 
 }

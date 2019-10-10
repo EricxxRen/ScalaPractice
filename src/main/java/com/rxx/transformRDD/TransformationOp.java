@@ -4,10 +4,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.PairFunction;
-import org.apache.spark.api.java.function.VoidFunction;
+import org.apache.spark.api.java.function.*;
 import scala.Tuple2;
 
 import java.util.Arrays;
@@ -22,7 +19,8 @@ public class TransformationOp {
 //        mapPractise();
 //        filterPractise();
 //        flatMapPractise();
-        groupByKeyPractise();
+//        groupByKeyPractise();
+        reduceByKeyPractise();
     }
 
     /**
@@ -157,6 +155,40 @@ public class TransformationOp {
                     System.out.println(marks.next());
                 }
                 System.out.println("============");
+            }
+        });
+
+        sc.close();
+
+    }
+
+    /**
+     * 班级总分 - reduceByKey
+     */
+    private static void reduceByKeyPractise () {
+        SparkConf conf = new SparkConf().setAppName("reduceByKey").setMaster("local");
+        JavaSparkContext sc = new JavaSparkContext(conf);
+
+        JavaRDD<String> lines = sc.textFile("/Users/renxiaoxing/Documents/gitRepo/ScalaPractice/Inputs/marks.txt");
+
+        JavaPairRDD<String, Integer> pairRDD = lines.mapToPair(new PairFunction<String, String, Integer>() {
+            public Tuple2<String, Integer> call(String s) throws Exception {
+                String[] pair = s.split(",");
+                String cla = pair[0];
+                Integer score = Integer.valueOf(pair[1]);
+                return new Tuple2<String, Integer>(cla, score);
+            }
+        });
+
+        JavaPairRDD<String, Integer> result = pairRDD.reduceByKey(new Function2<Integer, Integer, Integer>() {
+            public Integer call(Integer v1, Integer v2) throws Exception {
+                return v1 + v2;
+            }
+        });
+
+        result.foreach(new VoidFunction<Tuple2<String, Integer>>() {
+            public void call(Tuple2<String, Integer> t1) throws Exception {
+                System.out.println(t1._1 + ": " + t1._2);
             }
         });
 
