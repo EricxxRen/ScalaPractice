@@ -55,6 +55,7 @@ public class SharedVariable {
 
         //在spark2.0中，accumulator使用有变化，需要调用sc.sc().longAccumulator方法
         //不需要指定初始值，默认从0开始，参数为accumulator名
+        //参考 https://www.jianshu.com/p/9d6111fc6303
         final LongAccumulator sum = sc.sc().longAccumulator("Sum");
 
         List<Integer> nums = Arrays.asList(1,2,3,4,5);
